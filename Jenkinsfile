@@ -1,32 +1,31 @@
-pipeline{
-    agent {
-        label 'java'
-    }
+@Library('jenkins-shared-library') _
 
-    tools{
-        jdk "java-8"
-    }
+pipeline {
+    agent any
 
     environment {
-        JAVA_HOME = "/home/jenkins/tools/hudson.model.JDK/java-8/openlogic-openjdk-8u442-b06-linux-x64"
+        IMAGE_NAME = 'hendsiam/java-task1'
     }
 
-    stages{
-        stage("Build java app"){
-            steps{
-                sh 'mvn clean package install'
+    stages {
+        stage('Build Java') {
+            steps {
+                buildJavaApp()
             }
         }
-        stage("Test java app"){
-            steps{
-                sh 'mvn test'
+
+        stage('Build Docker Image') {
+            steps {
+                buildDockerImage(env.IMAGE_NAME)
             }
         }
-        stage("build java app image"){
-            steps{
-                sh 'docker build -t java:v1 .'
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    pushDockerImage(env.IMAGE_NAME)
+                }
             }
         }
     }
-    
 }
